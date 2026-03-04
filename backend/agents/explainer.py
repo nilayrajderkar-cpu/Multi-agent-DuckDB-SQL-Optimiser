@@ -72,7 +72,7 @@ class ExplainerAgent(BaseAgent):
         
         return summary
     
-    async def _generate_recommendations(self, validated_candidates: List[Tuple[Optimization Candidate, ValidationResult]]) -> List[str]:
+    async def _generate_recommendations(self, validated_candidates: List[Tuple[OptimizationCandidate, ValidationResult]]) -> List[str]:
         """Generate specific recommendations"""
         recommendations = []
         

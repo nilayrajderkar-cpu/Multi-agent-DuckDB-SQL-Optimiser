@@ -11,11 +11,14 @@ Generates multiple optimization candidates using different strategies:
 
 import os
 import httpx
+import logging
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 
 from .base_agent import BaseAgent
 from .query_analyzer import QueryAnalysis
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class OptimizationCandidate:
