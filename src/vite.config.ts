@@ -21,7 +21,7 @@ export default defineConfig({
   define: {
     'process.env.REACT_APP_API_URL': JSON.stringify(
       process.env.NODE_ENV === 'production' 
-        ? '/api/optimize-sql'  // Vercel serverless function
+        ? 'https://multi-agent-sql-optimizer.onrender.com/api/optimize-sql'  // Render backend
         : 'http://localhost:8000'
     )
   }
