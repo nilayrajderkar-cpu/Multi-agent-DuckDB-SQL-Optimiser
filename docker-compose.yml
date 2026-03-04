@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: frontend-builder
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+    volumes:
+      - ./src:/app/frontend
+      - /app/frontend/node_modules
+    command: npm start
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: backend
+    ports:
+      - "8000:8000"
+    environment:
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - CORS_ORIGINS=http://localhost:3000,https://yourdomain.com
+    volumes:
+      - ./backend:/app/backend
+      - ./backend/logs:/app/backend/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
