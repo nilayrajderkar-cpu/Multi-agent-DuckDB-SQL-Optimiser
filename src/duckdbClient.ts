@@ -35,3 +35,29 @@ export async function getDb(): Promise<duckdb.AsyncDuckDB> {
   }
   return dbPromise;
 }
+
+export async function executeQuery(sql: string): Promise<{ columns: string[], rows: any[] }> {
+  const db = await getDb();
+  const conn = await db.connect();
+  
+  try {
+    const result = await conn.query(sql);
+    
+    // Get column names
+    const columns = result.schema.fields.map((field: any) => field.name);
+    
+    // Convert result to rows
+    const rows: any[] = [];
+    for await (const row of result) {
+      const rowData: any = {};
+      columns.forEach((col, index) => {
+        rowData[col] = row[index];
+      });
+      rows.push(rowData);
+    }
+    
+    return { columns, rows };
+  } finally {
+    await conn.close();
+  }
+}

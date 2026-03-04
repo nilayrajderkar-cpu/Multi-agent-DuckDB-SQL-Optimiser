@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { getDb } from './duckdbClient';
+import { getDb, executeQuery } from './duckdbClient';
 
 type SchemaRow = {
   column_name: string;
@@ -96,6 +96,9 @@ export const App: React.FC = () => {
   const [optimizedSql, setOptimizedSql] = useState('');
   const [optExplanation, setOptExplanation] = useState('');
   const [optimizationResult, setOptimizationResult] = useState<OptimizationResult | null>(null);
+  const [queryResults, setQueryResults] = useState<{ columns: string[], rows: any[] } | null>(null);
+  const [queryResultsError, setQueryResultsError] = useState<string | null>(null);
+  const [queryResultsLoading, setQueryResultsLoading] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -288,6 +291,34 @@ export const App: React.FC = () => {
       setOptimizedSql(data.optimized_sql ?? '');
       setOptExplanation(data.explanation ?? '');
       setOptimizationResult(data);
+
+      // Execute the optimized query to show results
+      if (data.optimized_sql && data.optimized_sql !== null) {
+        try {
+          setQueryResultsLoading(true);
+          setQueryResultsError(null);
+          const results = await executeQuery(data.optimized_sql);
+          setQueryResults(results);
+        } catch (e) {
+          setQueryResultsError((e as Error).message ?? 'Failed to execute optimized query');
+          setQueryResults(null);
+        } finally {
+          setQueryResultsLoading(false);
+        }
+      } else {
+        // No optimization, execute original query
+        try {
+          setQueryResultsLoading(true);
+          setQueryResultsError(null);
+          const results = await executeQuery(sql);
+          setQueryResults(results);
+        } catch (e) {
+          setQueryResultsError((e as Error).message ?? 'Failed to execute query');
+          setQueryResults(null);
+        } finally {
+          setQueryResultsLoading(false);
+        }
+      }
     } catch (e) {
       if ((e as Error).name === 'AbortError') {
         setOptError('Timed out waiting for optimizer. The model may still be loading.');
@@ -484,6 +515,67 @@ export const App: React.FC = () => {
               {optimizationResult && (
                 <>
                   <div className="pill pill-outline">📊 Query Results</div>
+                  
+                  {queryResultsLoading && (
+                    <div style={{ marginBottom: '16px', padding: '12px', background: '#020204', borderRadius: '8px', border: '1px solid #25252e' }}>
+                      <div style={{ fontSize: '11px', color: '#b5b5c0' }}>🔄 Executing query...</div>
+                    </div>
+                  )}
+                  
+                  {queryResultsError && (
+                    <div style={{ marginBottom: '16px', padding: '12px', background: '#020204', borderRadius: '8px', border: '1px solid #25252e' }}>
+                      <div style={{ fontSize: '11px', color: '#ff6b6b' }}>❌ {queryResultsError}</div>
+                    </div>
+                  )}
+                  
+                  {queryResults && (
+                    <div style={{ marginBottom: '16px', background: '#020204', borderRadius: '8px', border: '1px solid #25252e' }}>
+                      <div style={{ padding: '12px', borderBottom: '1px solid #25252e' }}>
+                        <div style={{ fontSize: '11px', fontWeight: '600', color: '#f5f5f8' }}>
+                          Query Results ({queryResults.rows.length} rows)
+                        </div>
+                      </div>
+                      
+                      <div style={{ overflowX: 'auto', maxHeight: '300px', overflowY: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+                          <thead style={{ position: 'sticky', top: 0, background: '#1a1a1e', zIndex: 1 }}>
+                            <tr>
+                              {queryResults.columns.map((col, idx) => (
+                                <th key={idx} style={{ 
+                                  padding: '8px 12px', 
+                                  textAlign: 'left', 
+                                  borderBottom: '1px solid #25252e',
+                                  color: '#f5f5f8',
+                                  fontWeight: '600',
+                                  fontSize: '10px'
+                                }}>
+                                  {col}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {queryResults.rows.map((row, rowIdx) => (
+                              <tr key={rowIdx} style={{ 
+                                borderBottom: rowIdx < queryResults.rows.length - 1 ? '1px solid #25252e' : 'none'
+                              }}>
+                                {queryResults.columns.map((col, colIdx) => (
+                                  <td key={colIdx} style={{ 
+                                    padding: '8px 12px', 
+                                    color: '#e5e5ee',
+                                    fontSize: '10px'
+                                  }}>
+                                    {row[col]?.toString() ?? ''}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                  
                   <div style={{ marginBottom: '16px', padding: '12px', background: '#020204', borderRadius: '8px', border: '1px solid #25252e' }}>
                     <div style={{ fontSize: '11px', fontWeight: '600', marginBottom: '8px', color: '#f5f5f8' }}>
                       Performance Analysis
@@ -508,7 +600,7 @@ export const App: React.FC = () => {
                         <div style={{ fontSize: '10px', color: '#b5b5c0', marginBottom: '4px' }}>
                           Recommendations:
                         </div>
-                        {optimizationResult.agent_results.explainer.recommendations.map((rec, idx) => (
+                        {optimizationResult.agent_results.explainer.recommendations.map((rec: string, idx: number) => (
                           <div key={idx} style={{ fontSize: '10px', color: '#e5e5ee', marginBottom: '2px' }}>
                             {rec}
                           </div>
