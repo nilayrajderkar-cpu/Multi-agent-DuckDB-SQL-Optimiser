@@ -271,7 +271,7 @@ export const App: React.FC = () => {
         controller.abort();
       }, 180000); // Increased timeout for multi-agent processing
 
-      const apiUrl = process.env.REACT_APP_API_URL + '/api/optimize-sql';
+      const apiUrl = process.env.REACT_APP_API_URL || '/api/optimize-sql';
       console.log('Calling API at:', apiUrl);
       
       const res = await fetch(apiUrl, {
