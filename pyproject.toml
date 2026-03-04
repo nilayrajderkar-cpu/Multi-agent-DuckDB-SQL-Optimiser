@@ -1,0 +1,9 @@
+[project]
+name = "sql-optimiser"
+version = "0.1.0"
+description = "Multi-Agent SQL Optimization Framework"
+dependencies = []
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
