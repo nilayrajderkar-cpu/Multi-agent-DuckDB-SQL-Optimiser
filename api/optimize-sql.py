@@ -86,6 +86,8 @@ class handler(BaseHTTPRequestHandler):
         
         if not suggestions:
             suggestions.append("• Query appears well-optimized")
+            # No optimization needed - return None
+            optimized_sql = None
         
         return {
             "optimized_sql": optimized_sql,

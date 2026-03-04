@@ -101,7 +101,7 @@ class MultiAgentOrchestrator:
             optimized_sql = candidate.sql
             explanation = explanation_result.get('summary', '')
         else:
-            optimized_sql = "No optimization recommended"
+            optimized_sql = None  # No optimization available
             explanation = explanation_result.get('summary', 'No optimizations available')
         
         return {
