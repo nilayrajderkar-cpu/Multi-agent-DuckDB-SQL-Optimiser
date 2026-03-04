@@ -16,6 +16,7 @@ import os
 from typing import List, Dict
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from agents import MultiAgentOrchestrator
 
@@ -45,6 +46,15 @@ app = FastAPI(
     title="🧠 Multi-Agent SQL Optimization Framework",
     description="Advanced database optimization using 4 specialized AI agents",
     version="2.0.0"
+)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Initialize multi-agent orchestrator
