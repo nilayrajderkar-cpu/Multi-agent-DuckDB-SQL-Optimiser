@@ -19,15 +19,26 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from agents import MultiAgentOrchestrator
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler('logs/optimizer.log')
-    ]
-)
+# Configure logging for production
+import sys
+if os.environ.get('VERCEL'):
+    # Vercel environment - only console logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        handlers=[logging.StreamHandler(sys.stdout)]
+    )
+else:
+    # Local development - file logging
+    os.makedirs('logs', exist_ok=True)
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        handlers=[
+            logging.StreamHandler(),
+            logging.FileHandler('logs/optimizer.log')
+        ]
+    )
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
@@ -50,6 +61,17 @@ class OptimizeResponse(BaseModel):
     explanation: str
     agent_results: Dict = {}
     pipeline_performance: Dict = {}
+
+@app.get("/debug")
+async def debug():
+    """Debug endpoint to check environment"""
+    return {
+        "environment": os.environ.get('VERCEL', 'local'),
+        "api_key_set": bool(os.environ.get('GROQ_API_KEY')),
+        "agents_loaded": list(orchestrator.agents.keys()),
+        "working_dir": os.getcwd(),
+        "python_path": sys.path[:3]  # First few entries
+    }
 
 @app.get("/")
 async def root():
@@ -88,6 +110,40 @@ def optimize_sql_test() -> OptimizeResponse:
             "explainer": {"status": "completed", "execution_time_ms": 67.3}
         },
         pipeline_performance={"total_time_ms": 322.1, "agents_completed": 4}
+    )
+
+@app.post("/api/optimize-sql/mock", response_model=OptimizeResponse)
+async def optimize_sql_mock(req: OptimizeRequest) -> OptimizeResponse:
+    """Mock optimization endpoint for testing"""
+    return OptimizeResponse(
+        optimized_sql=f"SELECT * FROM ({req.sql}) optimized_query LIMIT 1000",
+        explanation="🧠 Multi-Agent Analysis Complete\n\nGenerated 3 optimization candidates, 3 passed validation.\n\n🏆 Best Optimization:\n• Performance improvement: 15.2%\n• Cost reduction: 450.0 → 382.5\n• Validation time: 2.1ms\n\n📋 Recommended changes:\n• Added LIMIT clause to prevent full table scans",
+        agent_results={
+            "analyzer": {
+                "status": "completed",
+                "execution_time_ms": 1.2,
+                "analysis": {"has_joins": False, "has_subqueries": False, "has_aggregations": False, "has_filters": True, "has_sorting": False, "has_limit": False}
+            },
+            "optimizer": {
+                "status": "completed", 
+                "execution_time_ms": 120.5,
+                "candidates_generated": 3
+            },
+            "validator": {
+                "status": "completed",
+                "execution_time_ms": 2.1,
+                "candidates_validated": 3
+            },
+            "explainer": {
+                "status": "completed",
+                "execution_time_ms": 67.3,
+                "recommendations": ["• Added LIMIT clause for better performance", "• Consider adding indexes on filter columns"]
+            }
+        },
+        pipeline_performance={
+            "total_time_ms": 191.1,
+            "agents_completed": 4
+        }
     )
 
 @app.post("/api/optimize-sql", response_model=OptimizeResponse)
