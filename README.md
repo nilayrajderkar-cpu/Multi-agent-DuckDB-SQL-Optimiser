@@ -30,13 +30,16 @@ This is a small playground for exploring DuckDB query plans directly in your bro
 - DuckDB runs entirely in WebAssembly in your browser; uploaded data never leaves your machine.
 - Currently, the uploader expects **CSV** files and automatically infers the schema using `read_csv_auto`.
 
-# 🧠 Multi-Agent SQL Optimization Framework
+## 🧠 Multi-Agent SQL Optimization Framework
 
 [![Multi-Agent SQL Optimizer](https://img.shields.io/badge/Architecture-Multi--Agent-blue?style=for-the-badge)
 [![FastAPI](https://img.shields.io/badge/Framework-FastAPI-009688?style=for-the-badge)
 [![DuckDB](https://img.shields.io/badge/Database-DuckDB-FFFC00?style=for-the-badge)
 [![TypeScript](https://img.shields.io/badge/Language-TypeScript-3178C6?style=for-the-badge)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+[![Live Demo](https://img.shields.io/badge/Demo-Live-FF6B6B?style=for-the-badge)
+
+**🚀 Live Demo**: https://sql-optimiser.vercel.app
 
 A sophisticated database optimization system using **4 specialized AI agents** that work together to analyze, optimize, validate, and explain SQL queries. This project demonstrates advanced multi-agent AI architecture and real-world database performance optimization.
 

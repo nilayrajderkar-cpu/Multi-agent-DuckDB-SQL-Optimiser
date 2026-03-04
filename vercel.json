@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "src/package.json",
+      "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
         "distDir": "dist"
@@ -20,15 +20,10 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/src/$1"
+      "dest": "/dist/$1"
     }
   ],
   "env": {
-    
-  },
-  "functions": {
-    "api/*.py": {
-      "runtime": "python3.9"
-    }
+    "GROQ_API_KEY": "@groq-api-key"
   }
 }

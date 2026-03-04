@@ -6,8 +6,9 @@ Manages agent lifecycle, data flow, and result compilation.
 """
 
 import logging
-from typing import Dict, Any
-
+from typing import Dict, List, Any, Optional
+import asyncio
+from datetime import datetime
 from .base_agent import AgentStatus
 from .query_analyzer import QueryAnalyzerAgent
 from .optimizer_generator import OptimizerGeneratorAgent
@@ -100,7 +101,7 @@ class MultiAgentOrchestrator:
             optimized_sql = candidate.sql
             explanation = explanation_result.get('summary', '')
         else:
-            optimized_sql = "No optimization recommended"
+            optimized_sql = ""  # No optimization available - return empty string
             explanation = explanation_result.get('summary', 'No optimizations available')
         
         return {

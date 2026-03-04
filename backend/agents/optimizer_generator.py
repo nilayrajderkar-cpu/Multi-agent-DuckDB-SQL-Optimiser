@@ -11,11 +11,14 @@ Generates multiple optimization candidates using different strategies:
 
 import os
 import httpx
+import logging
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 
 from .base_agent import BaseAgent
 from .query_analyzer import QueryAnalysis
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class OptimizationCandidate:
@@ -233,16 +236,34 @@ EXPLANATION:
     
     def _extract_sql_from_response(self, response: str, original_sql: str) -> str:
         """Extract optimized SQL from AI response"""
+        print(f"🔍 AI Response: {response[:200]}...")
+        
         if "OPTIMIZED_SQL:" in response:
             try:
                 _, after_opt = response.split("OPTIMIZED_SQL:", 1)
                 if "EXPLANATION:" in after_opt:
                     sql_part, _ = after_opt.split("EXPLANATION:", 1)
-                    return sql_part.strip()
+                    extracted_sql = sql_part.strip()
                 else:
-                    return after_opt.strip()
-            except:
+                    extracted_sql = after_opt.strip()
+                
+                # Remove markdown code blocks
+                if extracted_sql.startswith("```sql"):
+                    extracted_sql = extracted_sql.replace("```sql", "").strip()
+                if extracted_sql.startswith("```"):
+                    extracted_sql = extracted_sql.replace("```", "").strip()
+                if extracted_sql.endswith("```"):
+                    extracted_sql = extracted_sql[:-3].strip()
+                
+                print(f"✅ Extracted SQL: {extracted_sql}")
+                return extracted_sql
+            except Exception as e:
+                print(f"❌ SQL extraction error: {e}")
                 pass
+        else:
+            print(f"❌ No OPTIMIZED_SQL found in response")
+            
+        print(f"🔄 Returning original SQL: {original_sql[:100]}...")
         return original_sql  # Return original if extraction fails
     
     async def _call_groq_api(self, prompt: str) -> Optional[str]:
@@ -261,12 +282,16 @@ EXPLANATION:
             }
             
             async with httpx.AsyncClient(timeout=30.0) as client:
+                print(f"🌐 Calling Groq API with model: {payload['model']}")
                 response = await client.post(self.groq_api_url, headers=headers, json=payload)
                 response.raise_for_status()
                 
                 data = response.json()
-                return data["choices"][0]["message"]["content"]
+                ai_response = data["choices"][0]["message"]["content"]
+                print(f"🤖 Groq API Response: {ai_response[:200]}...")
+                return ai_response
                 
         except Exception as e:
+            print(f"❌ Groq API call failed: {e}")
             logger.error(f"Groq API call failed: {e}")
             return None
